@@ -1,4 +1,4 @@
-import  useState  from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { FaTag, FaRupeeSign, FaCheckCircle } from "react-icons/fa";
 import loadRazorpay from "@/utils/loadRazorpay";
