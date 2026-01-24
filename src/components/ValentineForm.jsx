@@ -21,21 +21,19 @@ export default function ValentineForm() {
   });
 
   const [showPopup, setShowPopup] = useState(false);
-  const [showPaymentSummary,setPaymentSummary] = useState(false)
+  const [showPaymentSummary, setShowPaymentSummary] = useState(false);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setShowPopup(true);
   };
 
-  /* 🔁 REUSABLE HEART ANIMATION (LOCAL) */
-  const FloatingHearts = ({ count = 8 }: { count?: number }) => (
+  /* 🔁 FLOATING HEARTS COMPONENT */
+  const FloatingHearts = ({ count = 8 }) => (
     <>
       {[...Array(count)].map((_, i) => {
         const size = Math.random() * 16 + 16;
@@ -69,104 +67,105 @@ export default function ValentineForm() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-200 via-rose-200 to-red-200 px-4 overflow-hidden">
-
-
-{[...Array(6)].map((_, i) => ( <motion.div key={i} className="absolute text-pink-500 text-2xl pointer-events-none" initial={{ y: "100vh", opacity: 0 }} animate={{ y: "-10vh", opacity: 1 }} transition={{ duration: 6 + i, repeat: Infinity, delay: i * 0.8, }} > ❤️ </motion.div> ))}
-      {/* 1️⃣ BACKGROUND HEARTS */}
+      {/* BACKGROUND HEARTS */}
       <FloatingHearts count={20} />
 
-      {/* FORM AREA */}
-      {showPaymentSummary ?
-      <div className="relative z-10 w-full flex justify-center">
-        <PaymentSummary/>
-      </div>
-      :
-      <div className="relative z-10 w-full flex justify-center">
-        <div className="relative w-full max-w-lg">
-
-          {/* 2️⃣ HEARTS AROUND FORM */}
-          <FloatingHearts count={6} />
-
-          <motion.div
-            initial={{ scale: 0.85, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="relative z-10 bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 sm:p-8"
-          >
-            <motion.div
-              animate={{ rotate: [0, -10, 10, 0] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-              className="text-5xl text-center mb-2"
-            >
-              💘
-            </motion.div>
-
-            <h2 className="text-2xl font-bold text-center text-pink-600 mb-6">
-              Valentine Profile
-            </h2>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="relative">
-                <FaUser className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-400" />
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Your Name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full pl-11 p-3 border rounded-xl focus:ring-2 focus:ring-pink-400"
-                  required
-                />
-              </div>
-
-              <div className="relative">
-                <FaBirthdayCake className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-400" />
-                <input
-                  type="date"
-                  name="dob"
-                  value={formData.dob}
-                  onChange={handleChange}
-                  className="w-full pl-11 p-3 border rounded-xl focus:ring-2 focus:ring-pink-400"
-                  required
-                />
-              </div>
-
-              <div className="relative">
-                <FaHeart className="absolute left-4 top-1/2 -translate-y-1/2 text-red-400" />
-                <input
-                  type="text"
-                  name="nickname"
-                  placeholder="Love Nickname 💕"
-                  value={formData.nickname}
-                  onChange={handleChange}
-                  className="w-full pl-11 p-3 border rounded-xl focus:ring-2 focus:ring-pink-400"
-                />
-              </div>
-
-              <div className="relative">
-                <FaPen className="absolute left-4 top-4 text-pink-400" />
-                <textarea
-                  name="description"
-                  placeholder="Write something sweet 💌"
-                  rows={4}
-                  value={formData.description}
-                  onChange={handleChange}
-                  className="w-full pl-11 p-3 border rounded-xl resize-none focus:ring-2 focus:ring-pink-400"
-                />
-              </div>
-
-              <motion.button
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-full bg-gradient-to-r from-pink-500 to-red-500 text-white py-3 rounded-xl font-semibold shadow-lg"
-              >
-                Save With Love 💖
-              </motion.button>
-            </form>
-          </motion.div>
+      {/* MAIN CONTENT */}
+      {showPaymentSummary ? (
+        <div className="relative z-10 w-full flex justify-center">
+          <PaymentSummary />
         </div>
-      </div>
-    }
+      ) : (
+        <div className="relative z-10 w-full flex justify-center">
+          <div className="relative w-full max-w-lg">
+            {/* HEARTS AROUND FORM */}
+            <FloatingHearts count={6} />
+
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="relative z-10 bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 sm:p-8"
+            >
+              <motion.div
+                animate={{ rotate: [0, -10, 10, 0] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="text-5xl text-center mb-2"
+              >
+                💘
+              </motion.div>
+
+              <h2 className="text-2xl font-bold text-center text-pink-600 mb-6">
+                Valentine Profile
+              </h2>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* NAME */}
+                <div className="relative">
+                  <FaUser className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-400" />
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Your Name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full pl-11 p-3 border rounded-xl focus:ring-2 focus:ring-pink-400"
+                    required
+                  />
+                </div>
+
+                {/* DOB */}
+                <div className="relative">
+                  <FaBirthdayCake className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-400" />
+                  <input
+                    type="date"
+                    name="dob"
+                    value={formData.dob}
+                    onChange={handleChange}
+                    className="w-full pl-11 p-3 border rounded-xl focus:ring-2 focus:ring-pink-400"
+                    required
+                  />
+                </div>
+
+                {/* NICKNAME */}
+                <div className="relative">
+                  <FaHeart className="absolute left-4 top-1/2 -translate-y-1/2 text-red-400" />
+                  <input
+                    type="text"
+                    name="nickname"
+                    placeholder="Love Nickname 💕"
+                    value={formData.nickname}
+                    onChange={handleChange}
+                    className="w-full pl-11 p-3 border rounded-xl focus:ring-2 focus:ring-pink-400"
+                  />
+                </div>
+
+                {/* DESCRIPTION */}
+                <div className="relative">
+                  <FaPen className="absolute left-4 top-4 text-pink-400" />
+                  <textarea
+                    name="description"
+                    placeholder="Write something sweet 💌"
+                    rows={4}
+                    value={formData.description}
+                    onChange={handleChange}
+                    className="w-full pl-11 p-3 border rounded-xl resize-none focus:ring-2 focus:ring-pink-400"
+                  />
+                </div>
+
+                {/* SUBMIT */}
+                <motion.button
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="w-full bg-gradient-to-r from-pink-500 to-red-500 text-white py-3 rounded-xl font-semibold shadow-lg"
+                >
+                  Save With Love 💖
+                </motion.button>
+              </form>
+            </motion.div>
+          </div>
+        </div>
+      )}
 
       {/* POPUP */}
       <AnimatePresence>
@@ -185,7 +184,6 @@ export default function ValentineForm() {
               exit={{ scale: 0.7, opacity: 0 }}
               className="relative bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-xl overflow-hidden"
             >
-              {/* 3️⃣ HEARTS INSIDE POPUP */}
               <FloatingHearts count={4} />
 
               <div className="relative z-10">
@@ -206,7 +204,10 @@ export default function ValentineForm() {
                   </button>
 
                   <button
-                    onClick={() => {setPaymentSummary(true),setShowPopup(false)}}
+                    onClick={() => {
+                      setShowPaymentSummary(true);
+                      setShowPopup(false);
+                    }}
                     className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 to-red-500 text-white py-3 rounded-xl font-semibold"
                   >
                     <FaCreditCard /> Continue with Payment

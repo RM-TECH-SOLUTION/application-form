@@ -3,11 +3,10 @@ import { motion } from "framer-motion";
 import { FaTag, FaRupeeSign, FaCheckCircle } from "react-icons/fa";
 import loadRazorpay from "@/utils/loadRazorpay";
 
-
 const BASE_AMOUNT = 60;
 
-// static promo codes
-const PROMO_CODES: Record<string, number> = {
+// static promo codes (JS version)
+const PROMO_CODES = {
   LOVE50: 50,
   VALENTINE30: 30,
 };
@@ -17,51 +16,10 @@ export default function PaymentSummary() {
   const [discount, setDiscount] = useState(0);
   const [applied, setApplied] = useState(false);
 
-  const handlePayment = async () => {
-  const res = await loadRazorpay();
-  if (!res) {
-    alert("Razorpay SDK failed to load");
-    return;
-  }
-
-  // 1️⃣ Create order
-  const orderRes = await fetch("/api/create-order", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ amount: totalAmount }),
-  });
-
-  const orderData = await orderRes.json();
-
-  // 2️⃣ Open Razorpay checkout
-  const options = {
-    key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-    amount: orderData.amount,
-    currency: "INR",
-    name: "Valentine Card 💖",
-    description: "Payment for Valentine Card",
-    order_id: orderData.id,
-    handler: function (response: any) {
-      alert("Payment successful 💖");
-      console.log(response);
-    },
-    prefill: {
-      name: "Valentine User",
-      email: "test@example.com",
-      contact: "9999999999",
-    },
-    theme: {
-      color: "#ec4899",
-    },
-  };
-
-  const paymentObject = new (window as any).Razorpay(options);
-  paymentObject.open();
-};
-
+  const totalAmount = Math.max(BASE_AMOUNT - discount, 0);
 
   const handleApplyPromo = () => {
-    const code = promoCode.toUpperCase();
+    const code = promoCode.trim().toUpperCase();
 
     if (PROMO_CODES[code]) {
       setDiscount(PROMO_CODES[code]);
@@ -73,7 +31,47 @@ export default function PaymentSummary() {
     }
   };
 
-  const totalAmount = BASE_AMOUNT - discount;
+  const handlePayment = async () => {
+    const res = await loadRazorpay();
+    if (!res) {
+      alert("Razorpay SDK failed to load");
+      return;
+    }
+
+    // 1️⃣ Create order (backend)
+    const orderRes = await fetch("/api/create-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: totalAmount }),
+    });
+
+    const orderData = await orderRes.json();
+
+    // 2️⃣ Razorpay options
+    const options = {
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      amount: orderData.amount,
+      currency: "INR",
+      name: "Valentine Card 💖",
+      description: "Payment for Valentine Card",
+      order_id: orderData.id,
+      handler: function (response) {
+        alert("Payment successful 💖");
+        console.log("Razorpay Response:", response);
+      },
+      prefill: {
+        name: "Valentine User",
+        email: "test@example.com",
+        contact: "9999999999",
+      },
+      theme: {
+        color: "#ec4899",
+      },
+    };
+
+    const paymentObject = new window.Razorpay(options);
+    paymentObject.open();
+  };
 
   return (
     <motion.div
@@ -145,13 +143,13 @@ export default function PaymentSummary() {
 
       {/* Pay Button */}
       <motion.button
-  whileHover={{ scale: 1.05 }}
-  whileTap={{ scale: 0.95 }}
-  onClick={handlePayment}
-  className="mt-6 w-full bg-gradient-to-r from-pink-500 to-red-500 text-white py-3 rounded-xl font-semibold shadow-lg"
->
-  Pay ₹{totalAmount}
-</motion.button>
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={handlePayment}
+        className="mt-6 w-full bg-gradient-to-r from-pink-500 to-red-500 text-white py-3 rounded-xl font-semibold shadow-lg"
+      >
+        Pay ₹{totalAmount}
+      </motion.button>
     </motion.div>
   );
 }
