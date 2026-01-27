@@ -6,16 +6,16 @@ import loadRazorpay from "@/utils/loadRazorpay";
 
 const BASE_AMOUNT = 60;
 
-// static promo codes (JS version)
 const PROMO_CODES = {
   LOVE50: 50,
   VALENTINE30: 30,
 };
 
-export default function PaymentSummary() {
+export default function PaymentSummary({ formData }) {
   const [promoCode, setPromoCode] = useState("");
   const [discount, setDiscount] = useState(0);
   const [applied, setApplied] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const totalAmount = Math.max(BASE_AMOUNT - discount, 0);
 
@@ -33,13 +33,16 @@ export default function PaymentSummary() {
   };
 
   const handlePayment = async () => {
+    setLoading(true);
+
     const res = await loadRazorpay();
     if (!res) {
       alert("Razorpay SDK failed to load");
+      setLoading(false);
       return;
     }
 
-    // 1️⃣ Create order (backend)
+    // 🔹 1. Create order (optional backend)
     const orderRes = await fetch("/api/create-order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -48,7 +51,7 @@ export default function PaymentSummary() {
 
     const orderData = await orderRes.json();
 
-    // 2️⃣ Razorpay options
+    // 🔹 2. Razorpay options
     const options = {
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
       amount: orderData.amount,
@@ -56,15 +59,50 @@ export default function PaymentSummary() {
       name: "Valentine Card 💖",
       description: "Payment for Valentine Card",
       order_id: orderData.id,
-      handler: function (response) {
-        alert("Payment successful 💖");
-        console.log("Razorpay Response:", response);
+
+      handler: async function (response) {
+        try {
+          // 🔥 3. SAVE STORY AFTER PAYMENT
+          const saveRes = await fetch(
+             "https://api.rmtechsolution.com/saveStory.php",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                ...formData,
+                paymentStatus: "paid",
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpaySignature: response.razorpay_signature,
+              }),
+            }
+          );
+
+          const saveData = await saveRes.json();
+
+          if (saveData.success) {
+            alert("Payment & Valentine saved successfully 💖");
+            console.log("Story ID:", saveData.storyId);
+          } else {
+            alert("Payment done, but failed to save story ❌");
+            console.error(saveData);
+          }
+        } catch (err) {
+          console.error("Save API error:", err);
+          alert("Payment done, but server error ❌");
+        } finally {
+          setLoading(false);
+        }
       },
+
       prefill: {
-        name: "Valentine User",
-        email: "test@example.com",
+        name: formData?.fromName || "Valentine User",
+        email: formData?.email || "test@example.com",
         contact: "9999999999",
       },
+
       theme: {
         color: "#ec4899",
       },
@@ -144,12 +182,13 @@ export default function PaymentSummary() {
 
       {/* Pay Button */}
       <motion.button
+        disabled={loading}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={handlePayment}
-        className="mt-6 w-full bg-gradient-to-r from-pink-500 to-red-500 text-white py-3 rounded-xl font-semibold shadow-lg"
+        className="mt-6 w-full bg-gradient-to-r from-pink-500 to-red-500 text-white py-3 rounded-xl font-semibold shadow-lg disabled:opacity-60"
       >
-        Pay ₹{totalAmount}
+        {loading ? "Processing..." : `Pay ₹${totalAmount}`}
       </motion.button>
     </motion.div>
   );

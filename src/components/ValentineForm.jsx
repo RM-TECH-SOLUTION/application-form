@@ -200,7 +200,7 @@ export default function ValentineForm() {
       </AnimatePresence>
 
       {showPaymentSummary ? (
-        <PaymentSummary />
+        <PaymentSummary formData={formData} />
       ) : (
         <div className="bg-white/90 rounded-3xl shadow-2xl p-6 max-w-lg w-full">
           <h2 className="text-2xl font-bold text-center text-pink-600 mb-2">
