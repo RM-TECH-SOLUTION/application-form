@@ -62,7 +62,7 @@ function ImageUploadBox({ images, limit, onUpload, onRemove }) {
   );
 }
 
-/* ================= + BUTTON ================= */
+/* ================= ADD BUTTON ================= */
 
 const AddButton = ({ onClick }) => (
   <button
@@ -72,6 +72,44 @@ const AddButton = ({ onClick }) => (
     +
   </button>
 );
+
+/* ================= PREVIEW POPUP ================= */
+
+const PreviewPopup = ({ data, onClose, onContinue }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+    >
+      <motion.div
+        initial={{ scale: 0.9 }}
+        animate={{ scale: 1 }}
+        className="bg-white rounded-2xl p-6 max-w-md w-full"
+      >
+        <h3 className="text-xl font-bold text-pink-600 mb-4 text-center">
+          Preview Your Valentine 💖
+        </h3>
+
+        <div className="flex justify-between mt-6">
+           <button
+            onClick={onClose}
+            className="px-6 py-3 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-xl font-semibold"
+          >
+            Preview
+          </button>
+          <button
+            onClick={onContinue}
+            className="px-6 py-3 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-xl font-semibold"
+          >
+            Continue to Pay 💳
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
 
 /* ================= MAIN COMPONENT ================= */
 
@@ -97,7 +135,7 @@ export default function ValentineForm() {
     2: "Love Letter 💌",
     3: "Promises From My Heart 🤞",
     4: "Our Journey Together 🌍",
-    5: "Precious Memories (Upload Atleast Four) 📸",
+    5: "Precious Memories 📸",
     6: "First Met 💕",
     7: "Your Email 📧",
   };
@@ -148,6 +186,19 @@ export default function ValentineForm() {
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-200 to-red-200 px-4 overflow-hidden">
       <FloatingHearts />
 
+      <AnimatePresence>
+        {showPopup && (
+          <PreviewPopup
+            data={formData}
+            onClose={() => setShowPopup(false)}
+            onContinue={() => {
+              setShowPopup(false);
+              setShowPaymentSummary(true);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       {showPaymentSummary ? (
         <PaymentSummary />
       ) : (
@@ -166,7 +217,6 @@ export default function ValentineForm() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -40 }}
             >
-              {/* STEP 1 */}
               {step === 1 && (
                 <>
                   <ImageUploadBox
@@ -175,130 +225,42 @@ export default function ValentineForm() {
                     onUpload={(e) => handleImageUpload(e, "banner1Images", 4)}
                     onRemove={(i) => removeImage("banner1Images", i)}
                   />
-                  <input
-                    name="fromName"
-                    placeholder="From Name"
-                    value={formData.fromName}
-                    onChange={handleChange}
-                    className="w-full p-3 border rounded-xl mb-3"
-                  />
-                  <input
-                    name="toName"
-                    placeholder="To Name"
-                    value={formData.toName}
-                    onChange={handleChange}
-                    className="w-full p-3 border rounded-xl"
-                  />
+                  <input name="fromName" placeholder="From Name" value={formData.fromName} onChange={handleChange} className="w-full p-3 border rounded-xl mb-3" />
+                  <input name="toName" placeholder="To Name" value={formData.toName} onChange={handleChange} className="w-full p-3 border rounded-xl" />
                 </>
               )}
 
-              {/* STEP 2 */}
               {step === 2 && (
-                <textarea
-                  name="loveLetter"
-                  rows={5}
-                  placeholder="Write your love letter 💌"
-                  value={formData.loveLetter}
-                  onChange={handleChange}
-                  className="w-full p-3 border rounded-xl"
-                />
+                <textarea name="loveLetter" rows={5} placeholder="Write your love letter 💌" value={formData.loveLetter} onChange={handleChange} className="w-full p-3 border rounded-xl" />
               )}
 
-              {/* STEP 3 */}
               {step === 3 && (
                 <>
                   {formData.promises.map((p, i) => (
                     <div key={i} className="border rounded-xl p-3 mb-3 relative">
-                      <input
-                        placeholder="Promise Title"
-                        value={p.title}
-                        onChange={(e) =>
-                          updateItem("promises", i, "title", e.target.value)
-                        }
-                        className="w-full p-3 border rounded-xl mb-2"
-                      />
-                      <textarea
-                        placeholder="Promise Description"
-                        value={p.description}
-                        onChange={(e) =>
-                          updateItem("promises", i, "description", e.target.value)
-                        }
-                        className="w-full p-3 border rounded-xl"
-                      />
-                      {i > 0 && (
-                        <button
-                          onClick={() => removeItem("promises", i)}
-                          className="absolute top-2 right-2 text-red-500"
-                        >
-                          ✕
-                        </button>
-                      )}
+                      <input placeholder="Promise Title" value={p.title} onChange={(e) => updateItem("promises", i, "title", e.target.value)} className="w-full p-3 border rounded-xl mb-2" />
+                      <textarea placeholder="Promise Description" value={p.description} onChange={(e) => updateItem("promises", i, "description", e.target.value)} className="w-full p-3 border rounded-xl" />
+                      {i > 0 && <button onClick={() => removeItem("promises", i)} className="absolute top-2 right-2 text-red-500">✕</button>}
                     </div>
                   ))}
-                  {formData.promises.length < 4 && (
-                    <AddButton
-                      onClick={() =>
-                        addItem("promises", { title: "", description: "" })
-                      }
-                    />
-                  )}
+                  {formData.promises.length < 4 && <AddButton onClick={() => addItem("promises", { title: "", description: "" })} />}
                 </>
               )}
 
-              {/* STEP 4 */}
               {step === 4 && (
                 <>
                   {formData.journeys.map((j, i) => (
                     <div key={i} className="border rounded-xl p-3 mb-3 relative">
-                      <input
-                        placeholder="Journey Title"
-                        value={j.title}
-                        onChange={(e) =>
-                          updateItem("journeys", i, "title", e.target.value)
-                        }
-                        className="w-full p-3 border rounded-xl mb-2"
-                      />
-                      <input
-                        placeholder="Year"
-                        value={j.year}
-                        onChange={(e) =>
-                          updateItem("journeys", i, "year", e.target.value)
-                        }
-                        className="w-full p-3 border rounded-xl mb-2"
-                      />
-                      <textarea
-                        placeholder="Journey Description"
-                        value={j.description}
-                        onChange={(e) =>
-                          updateItem("journeys", i, "description", e.target.value)
-                        }
-                        className="w-full p-3 border rounded-xl"
-                      />
-                      {i > 0 && (
-                        <button
-                          onClick={() => removeItem("journeys", i)}
-                          className="absolute top-2 right-2 text-red-500"
-                        >
-                          ✕
-                        </button>
-                      )}
+                      <input placeholder="Journey Title" value={j.title} onChange={(e) => updateItem("journeys", i, "title", e.target.value)} className="w-full p-3 border rounded-xl mb-2" />
+                      <input placeholder="Year" value={j.year} onChange={(e) => updateItem("journeys", i, "year", e.target.value)} className="w-full p-3 border rounded-xl mb-2" />
+                      <textarea placeholder="Journey Description" value={j.description} onChange={(e) => updateItem("journeys", i, "description", e.target.value)} className="w-full p-3 border rounded-xl" />
+                      {i > 0 && <button onClick={() => removeItem("journeys", i)} className="absolute top-2 right-2 text-red-500">✕</button>}
                     </div>
                   ))}
-                  {formData.journeys.length < 4 && (
-                    <AddButton
-                      onClick={() =>
-                        addItem("journeys", {
-                          title: "",
-                          year: "",
-                          description: "",
-                        })
-                      }
-                    />
-                  )}
+                  {formData.journeys.length < 4 && <AddButton onClick={() => addItem("journeys", { title: "", year: "", description: "" })} />}
                 </>
               )}
 
-              {/* STEP 5 */}
               {step === 5 && (
                 <ImageUploadBox
                   images={formData.galleryImages}
@@ -308,49 +270,24 @@ export default function ValentineForm() {
                 />
               )}
 
-              {/* STEP 6 */}
               {step === 6 && (
-                <input
-                  type="date"
-                  name="firstMetYear"
-                  value={formData.firstMetYear}
-                  onChange={handleChange}
-                  className="w-full p-3 border rounded-xl"
-                />
+                <input type="date" name="firstMetYear" value={formData.firstMetYear} onChange={handleChange} className="w-full p-3 border rounded-xl" />
               )}
 
-              {/* STEP 7 */}
               {step === 7 && (
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Enter your email 📧"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full p-3 border rounded-xl"
-                />
+                <input type="email" name="email" placeholder="Enter your email 📧" value={formData.email} onChange={handleChange} className="w-full p-3 border rounded-xl" />
               )}
             </motion.div>
           </AnimatePresence>
 
           <div className="flex justify-between mt-6">
-            {step > 1 && (
-              <button onClick={back} className="px-4 py-2 border rounded-xl">
-                Back
-              </button>
-            )}
+            {step > 1 && <button onClick={back} className="px-4 py-2 border rounded-xl">Back</button>}
             {step < 7 ? (
-              <button
-                onClick={next}
-                className="ml-auto px-6 py-3 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-xl font-semibold"
-              >
+              <button onClick={next} className="ml-auto px-6 py-3 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-xl font-semibold">
                 Next
               </button>
             ) : (
-              <button
-                onClick={() => setShowPopup(true)}
-                className="ml-auto px-6 py-3 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-xl font-semibold"
-              >
+              <button onClick={() => setShowPopup(true)} className="ml-auto px-6 py-3 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-xl font-semibold">
                 Save With Love 💖
               </button>
             )}
