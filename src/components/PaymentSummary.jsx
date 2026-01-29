@@ -1,14 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { FaTag, FaRupeeSign, FaCheckCircle } from "react-icons/fa";
 import loadRazorpay from "@/utils/loadRazorpay";
+import PaymentSuccess from "./PaymentSuccess";
 
-const BASE_AMOUNT = 60;
+const BASE_AMOUNT = 199;
 
 const PROMO_CODES = {
-  LOVE50: 50,
-  VALENTINE30: 30,
+  LOVE100: 100,
+  LOVE99: 198,
 };
 
 export default function PaymentSummary({ formData }) {
@@ -16,6 +17,11 @@ export default function PaymentSummary({ formData }) {
   const [discount, setDiscount] = useState(0);
   const [applied, setApplied] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [goToPaymentSuccesspage,setGoToPaymentSuccesspage] = useState(false)
+
+  useEffect(()=>{
+    setGoToPaymentSuccesspage(false)
+  },[])
 
   const totalAmount = Math.max(BASE_AMOUNT - discount, 0);
 
@@ -32,92 +38,117 @@ export default function PaymentSummary({ formData }) {
     }
   };
 
-  const handlePayment = async () => {
-    setLoading(true);
+ const handlePayment = async () => {
+  setLoading(true);
 
-    const res = await loadRazorpay();
-    if (!res) {
-      alert("Razorpay SDK failed to load");
-      setLoading(false);
-      return;
-    }
+  const res = await loadRazorpay();
+  if (!res) {
+    alert("Razorpay SDK failed to load");
+    setLoading(false);
+    return;
+  }
 
-    // 🔹 1. Create order (optional backend)
-    const orderRes = await fetch("/api/create-order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: totalAmount }),
-    });
+  const orderRes = await fetch("/api/create-order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ amount: totalAmount }),
+  });
 
-    const orderData = await orderRes.json();
+  const orderData = await orderRes.json();
 
-    // 🔹 2. Razorpay options
-    const options = {
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-      amount: orderData.amount,
-      currency: "INR",
-      name: "Valentine Card 💖",
-      description: "Payment for Valentine Card",
-      order_id: orderData.id,
+  const options = {
+    key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+    amount: orderData.amount,
+    currency: "INR",
+    name: "Valentine Card 💖",
+    description: "Payment for Valentine Card",
+    order_id: orderData.id,
 
-      handler: async function (response) {
-        try {
-          // 🔥 3. SAVE STORY AFTER PAYMENT
-          const saveRes = await fetch(
-             "https://api.rmtechsolution.com/saveStory.php",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                ...formData,
-                paymentStatus: "paid",
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpayOrderId: response.razorpay_order_id,
-                razorpaySignature: response.razorpay_signature,
-              }),
-            }
-          );
+    handler: async function (response) {
+      try {
+        const fd = new FormData();
 
-          const saveData = await saveRes.json();
+        fd.append("fromName", formData.fromName);
+        fd.append("toName", formData.toName);
+        fd.append("loveLetter", formData.loveLetter);
+        fd.append("firstMetYear", formData.firstMetYear);
+        fd.append("email", formData.email);
+        fd.append("paymentStatus", "paid");
+        fd.append("phone", formData.phone);
 
-          if (saveData.success) {
-            alert("Payment & Valentine saved successfully 💖");
-            console.log("Story ID:", saveData.storyId);
-          } else {
-            alert("Payment done, but failed to save story ❌");
-            console.error(saveData);
+        fd.append("promises", JSON.stringify(formData.promises));
+        fd.append("journeys", JSON.stringify(formData.journeys));
+
+        formData.banner1Images.forEach((img) => {
+          fd.append("bannerImages[]", img.file);
+        });
+
+        formData.galleryImages.forEach((img) => {
+          fd.append("galleryImages[]", img.file);
+        });
+
+        fd.append("razorpayPaymentId", response.razorpay_payment_id);
+        fd.append("razorpayOrderId", response.razorpay_order_id);
+        fd.append("razorpaySignature", response.razorpay_signature);
+
+        const saveRes = await fetch(
+          "https://api.rmtechsolution.com/saveStory.php",
+          {
+            method: "POST",
+            body: fd,
           }
-        } catch (err) {
-          console.error("Save API error:", err);
-          alert("Payment done, but server error ❌");
-        } finally {
-          setLoading(false);
+        );
+
+        const saveData = await saveRes.json();
+
+        if (saveData.success) {
+          setGoToPaymentSuccesspage(true);
+        } else {
+          alert("Failed to save story ❌");
         }
-      },
+      } catch (err) {
+        console.error(err);
+        alert("Server error ❌");
+      } finally {
+        setLoading(false); // ✅ success / error
+      }
+    },
 
-      prefill: {
-        name: formData?.fromName || "Valentine User",
-        email: formData?.email || "test@example.com",
-        contact: "9999999999",
+    modal: {
+      ondismiss: function () {
+        console.log("Payment popup closed");
+        setLoading(false); // ✅ CANCEL / CLOSE FIX
       },
+    },
 
-      theme: {
-        color: "#ec4899",
-      },
-    };
+    prefill: {
+      name: formData.fromName || "Valentine User",
+      email: formData.email || "test@example.com",
+      contact: formData.phone || "9999999999",
+    },
 
-    const paymentObject = new window.Razorpay(options);
-    paymentObject.open();
+    theme: {
+      color: "#ec4899",
+    },
   };
 
+  const paymentObject = new window.Razorpay(options);
+  paymentObject.open();
+};
+
+
+
   return (
+    <>
+    {goToPaymentSuccesspage ?
+    <PaymentSuccess/>
+    :
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
       className="w-full max-w-md bg-white rounded-3xl shadow-xl p-6 sm:p-8"
+
     >
       <h2 className="text-xl font-bold text-pink-600 mb-6 text-center">
         Payment Summary 💖
@@ -158,7 +189,7 @@ export default function PaymentSummary({ formData }) {
             <FaTag className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Enter code (LOVE50)"
+              placeholder="Enter code (LOVE100)"
               value={promoCode}
               onChange={(e) => setPromoCode(e.target.value)}
               className="w-full pl-10 p-3 border rounded-xl focus:ring-2 focus:ring-pink-400"
@@ -190,6 +221,7 @@ export default function PaymentSummary({ formData }) {
       >
         {loading ? "Processing..." : `Pay ₹${totalAmount}`}
       </motion.button>
-    </motion.div>
+    </motion.div>}
+    </>
   );
 }

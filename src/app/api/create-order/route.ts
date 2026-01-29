@@ -18,6 +18,9 @@ export async function POST(req) {
       key_secret: process.env.RAZORPAY_KEY_SECRET,
     });
 
+    // rzp_live_S842L613GRGXX2
+    // VEXUhjZjfbptgV3KmTa0Lvbo
+
     const order = await razorpay.orders.create({
       amount: amount * 100, // rupees → paise
       currency: "INR",
