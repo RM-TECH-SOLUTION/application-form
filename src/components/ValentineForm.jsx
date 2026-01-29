@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import PaymentSummary from "./PaymentSummary";
+import PaymentSuccess from "./PaymentSuccess";
 
 /* ================= HEART ANIMATION ================= */
 
@@ -18,7 +19,7 @@ const FloatingHearts = ({ count = 20 }) => (
       return (
         <motion.div
           key={i}
-          className="absolute pointer-events-none select-none"
+          className="absolute pointer-events-none select-none z-0"
           style={{ left: `${left}%`, fontSize: size }}
           initial={{ y: "110%", opacity: 0 }}
           animate={{ y: "-10%", opacity: 1 }}
@@ -75,41 +76,39 @@ const AddButton = ({ onClick }) => (
 
 /* ================= PREVIEW POPUP ================= */
 
-const PreviewPopup = ({ data, onClose, onContinue }) => {
-  return (
+const PreviewPopup = ({ onClose, onContinue }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+  >
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+      initial={{ scale: 0.9 }}
+      animate={{ scale: 1 }}
+      className="bg-white rounded-2xl p-6 max-w-md w-full"
     >
-      <motion.div
-        initial={{ scale: 0.9 }}
-        animate={{ scale: 1 }}
-        className="bg-white rounded-2xl p-6 max-w-md w-full"
-      >
-        <h3 className="text-xl font-bold text-pink-600 mb-4 text-center">
-          Preview Your Valentine 💖
-        </h3>
+      <h3 className="text-xl font-bold text-pink-600 mb-4 text-center">
+        Preview Your Valentine 💖
+      </h3>
 
-        <div className="flex justify-between mt-6">
-           <button
-            onClick={onClose}
-            className="px-6 py-3 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-xl font-semibold"
-          >
-            Preview
-          </button>
-          <button
-            onClick={onContinue}
-            className="px-6 py-3 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-xl font-semibold"
-          >
-            Continue to Pay 💳
-          </button>
-        </div>
-      </motion.div>
+      <div className="flex justify-between mt-6">
+        <button
+          onClick={onClose}
+          className="px-6 py-3 bg-gray-300 rounded-xl font-semibold"
+        >
+          Back
+        </button>
+        <button
+          onClick={onContinue}
+          className="px-6 py-3 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-xl font-semibold"
+        >
+          Continue 💕
+        </button>
+      </div>
     </motion.div>
-  );
-};
+  </motion.div>
+);
 
 /* ================= MAIN COMPONENT ================= */
 
@@ -128,6 +127,7 @@ export default function ValentineForm() {
     galleryImages: [],
     firstMetYear: "",
     email: "",
+    phone: "",
   });
 
   const stepTitles = {
@@ -138,9 +138,10 @@ export default function ValentineForm() {
     5: "Precious Memories 📸",
     6: "First Met 💕",
     7: "Your Email 📧",
+    8: "Your Phone 📱",
   };
 
-  const next = () => setStep((s) => Math.min(s + 1, 7));
+  const next = () => setStep((s) => Math.min(s + 1, 8));
   const back = () => setStep((s) => Math.max(s - 1, 1));
 
   const handleChange = (e) =>
@@ -182,6 +183,39 @@ export default function ValentineForm() {
     setFormData({ ...formData, [key]: updated });
   };
 
+  /* ================= VALIDATION ================= */
+
+  const isStepValid = () => {
+    switch (step) {
+      case 1:
+        return (
+          formData.banner1Images.length > 0 &&
+          formData.fromName.trim() &&
+          formData.toName.trim()
+        );
+      case 2:
+        return formData.loveLetter.trim().length >= 10;
+      case 3:
+        return formData.promises.every(
+          (p) => p.title.trim() && p.description.trim()
+        );
+      case 4:
+        return formData.journeys.every(
+          (j) => j.title.trim() && j.year.trim() && j.description.trim()
+        );
+      case 5:
+        return formData.galleryImages.length > 0;
+      case 6:
+        return formData.firstMetYear !== "";
+      case 7:
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
+      case 8:
+        return /^[6-9]\d{9}$/.test(formData.phone);
+      default:
+        return false;
+    }
+  };
+
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-200 to-red-200 px-4 overflow-hidden">
       <FloatingHearts />
@@ -189,7 +223,6 @@ export default function ValentineForm() {
       <AnimatePresence>
         {showPopup && (
           <PreviewPopup
-            data={formData}
             onClose={() => setShowPopup(false)}
             onContinue={() => {
               setShowPopup(false);
@@ -201,13 +234,15 @@ export default function ValentineForm() {
 
       {showPaymentSummary ? (
         <PaymentSummary formData={formData} />
+        // <PaymentSuccess/>
       ) : (
-        <div className="bg-white/90 rounded-3xl shadow-2xl p-6 max-w-lg w-full">
+        <div className="relative z-10 bg-white rounded-3xl shadow-2xl p-6 max-w-lg w-full">
+
           <h2 className="text-2xl font-bold text-center text-pink-600 mb-2">
             Valentine Story 💖
           </h2>
           <p className="text-center mb-4">
-            {stepTitles[step]} ({step}/7)
+            {stepTitles[step]} ({step}/8)
           </p>
 
           <AnimatePresence mode="wait">
@@ -277,17 +312,37 @@ export default function ValentineForm() {
               {step === 7 && (
                 <input type="email" name="email" placeholder="Enter your email 📧" value={formData.email} onChange={handleChange} className="w-full p-3 border rounded-xl" />
               )}
+
+              {step === 8 && (
+                <input type="tel" name="phone" placeholder="Enter phone number 📱" value={formData.phone} onChange={handleChange} maxLength={10} className="w-full p-3 border rounded-xl" />
+              )}
             </motion.div>
           </AnimatePresence>
 
           <div className="flex justify-between mt-6">
             {step > 1 && <button onClick={back} className="px-4 py-2 border rounded-xl">Back</button>}
-            {step < 7 ? (
-              <button onClick={next} className="ml-auto px-6 py-3 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-xl font-semibold">
+            {step < 8 ? (
+              <button
+                onClick={next}
+                disabled={!isStepValid()}
+                className={`ml-auto px-6 py-3 rounded-xl font-semibold ${
+                  isStepValid()
+                    ? "bg-gradient-to-r from-pink-500 to-red-500 text-white"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
+              >
                 Next
               </button>
             ) : (
-              <button onClick={() => setShowPopup(true)} className="ml-auto px-6 py-3 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-xl font-semibold">
+              <button
+                onClick={() => setShowPopup(true)}
+                disabled={!isStepValid()}
+                className={`ml-auto px-6 py-3 rounded-xl font-semibold ${
+                  isStepValid()
+                    ? "bg-gradient-to-r from-pink-500 to-red-500 text-white"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
+              >
                 Save With Love 💖
               </button>
             )}
