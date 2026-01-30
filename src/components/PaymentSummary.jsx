@@ -5,11 +5,12 @@ import { FaTag, FaRupeeSign, FaCheckCircle } from "react-icons/fa";
 import loadRazorpay from "@/utils/loadRazorpay";
 import PaymentSuccess from "./PaymentSuccess";
 
-const BASE_AMOUNT = 199;
+const BASE_AMOUNT = 299;
 
 const PROMO_CODES = {
   LOVE100: 100,
-  LOVE99: 198,
+  RMTECH99: 298,
+  STUDENT100:200
 };
 
 export default function PaymentSummary({ formData }) {
