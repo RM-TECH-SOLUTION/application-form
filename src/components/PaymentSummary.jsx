@@ -19,10 +19,37 @@ export default function PaymentSummary({ formData }) {
   const [applied, setApplied] = useState(false);
   const [loading, setLoading] = useState(false);
   const [goToPaymentSuccesspage, setGoToPaymentSuccesspage] = useState(false);
+  const [storyData, setStoryData] = useState(null);
+
+
 
   useEffect(() => {
     setGoToPaymentSuccesspage(false);
   }, []);
+
+  const fetchStory = async () => {
+  try {
+    const res = await fetch(
+      `https://api.rmtechsolution.com/getStory.php?fromName=${encodeURIComponent(
+        formData.fromName
+      )}&email=${encodeURIComponent(formData.email)}`
+    );
+
+    const data = await res.json();
+
+    if (data.success) {
+      setStoryData(data.data); // ✅ store full story object
+      return true;
+    } else {
+      alert("Story not found ❌");
+      return false;
+    }
+  } catch (err) {
+    console.error("Failed to fetch story", err);
+    return false;
+  }
+};
+
 
   const totalAmount = Math.max(BASE_AMOUNT - discount, 0);
 
@@ -125,10 +152,11 @@ export default function PaymentSummary({ formData }) {
           const saveData = await saveRes.json();
 
           if (saveData.success) {
-            setGoToPaymentSuccesspage(true);
-          } else {
-            alert("Failed to save story ❌");
-          }
+  const ok = await fetchStory(); // 🔥 CALL GET STORY
+  if (ok) {
+    setGoToPaymentSuccesspage(true);
+  }
+}
         } catch (err) {
           console.error(err);
           alert("Server error ❌");
@@ -159,7 +187,7 @@ export default function PaymentSummary({ formData }) {
   return (
     <>
       {goToPaymentSuccesspage ? (
-        <PaymentSuccess />
+        <PaymentSuccess story={storyData} />
       ) : (
         <motion.div
           initial={{ opacity: 0, y: 20 }}

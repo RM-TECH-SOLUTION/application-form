@@ -242,7 +242,9 @@ export default function ValentineForm() {
       </AnimatePresence>
 
       {showPaymentSummary ? (
+        <div className="relative z-10">
         <PaymentSummary formData={formData} />
+        </div>
       ) : (
         <div className="relative z-10 bg-white rounded-3xl shadow-2xl p-6 max-w-lg w-full">
 
