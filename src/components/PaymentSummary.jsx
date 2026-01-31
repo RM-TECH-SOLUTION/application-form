@@ -238,6 +238,7 @@ export default function PaymentSummary({ formData }) {
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value)}
                   className="w-full pl-10 p-3 border rounded-xl"
+                  style={{fontSize:13}}
                 />
               </div>
 
