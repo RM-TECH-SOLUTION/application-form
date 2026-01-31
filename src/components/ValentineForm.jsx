@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import PaymentSummary from "./PaymentSummary";
-import PaymentSuccess from "./PaymentSuccess";
 
 /* ================= HEART ANIMATION ================= */
 
@@ -63,6 +62,32 @@ function ImageUploadBox({ images, limit, onUpload, onRemove }) {
   );
 }
 
+/* ================= AUDIO UPLOAD ================= */
+
+function AudioUploadBox({ audioPreview, onUpload, onRemove }) {
+  return (
+    <div className="mb-4">
+      <label className="block text-sm font-medium text-gray-600 mb-2">
+        Voice Message 🎤 (optional)
+      </label>
+
+      {!audioPreview ? (
+        <label className="w-full flex items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer hover:border-pink-400 bg-white">
+          <span className="text-gray-400 font-medium">
+            Click to upload music or audio (mp3 / wav / m4a)
+          </span>
+          <input type="file" accept="audio/*" onChange={onUpload} className="hidden" />
+        </label>
+      ) : (
+        <div className="flex items-center gap-3">
+          <audio controls src={audioPreview} className="w-full" />
+          <button onClick={onRemove} className="text-red-500 font-bold">✕</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ================= ADD BUTTON ================= */
 
 const AddButton = ({ onClick }) => (
@@ -83,26 +108,16 @@ const PreviewPopup = ({ onClose, onContinue }) => (
     exit={{ opacity: 0 }}
     className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
   >
-    <motion.div
-      initial={{ scale: 0.9 }}
-      animate={{ scale: 1 }}
-      className="bg-white rounded-2xl p-6 max-w-md w-full"
-    >
+    <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-2xl p-6 max-w-md w-full">
       <h3 className="text-xl font-bold text-pink-600 mb-4 text-center">
         Preview Your Valentine 💖
       </h3>
 
       <div className="flex justify-between mt-6">
-        <button
-          onClick={onClose}
-          className="px-6 py-3 bg-gray-300 rounded-xl font-semibold"
-        >
+        <button onClick={onClose} className="px-6 py-3 bg-gray-300 rounded-xl font-semibold">
           Back
         </button>
-        <button
-          onClick={onContinue}
-          className="px-6 py-3 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-xl font-semibold"
-        >
+        <button onClick={onContinue} className="px-6 py-3 bg-gradient-to-r from-pink-500 to-red-500 text-white rounded-xl font-semibold">
           Continue 💕
         </button>
       </div>
@@ -110,7 +125,7 @@ const PreviewPopup = ({ onClose, onContinue }) => (
   </motion.div>
 );
 
-/* ================= MAIN COMPONENT ================= */
+/* ================= MAIN ================= */
 
 export default function ValentineForm() {
   const [step, setStep] = useState(1);
@@ -128,14 +143,16 @@ export default function ValentineForm() {
     firstMetYear: "",
     email: "",
     phone: "",
+    audio: null,
+    audioPreview: null,
   });
 
   const stepTitles = {
     1: "Banner & Names",
     2: "Love Letter 💌",
-    3: "Promises From My Heart 🤞",
-    4: "Our Journey Together 🌍",
-    5: "Precious Memories 📸",
+    3: "Promises 🤞",
+    4: "Our Journey 🌍",
+    5: "Memories 📸",
     6: "First Met 💕",
     7: "Your Email 📧",
     8: "Your Phone 📱",
@@ -147,6 +164,7 @@ export default function ValentineForm() {
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
+  /* IMAGE */
   const handleImageUpload = (e, key, limit) => {
     const files = Array.from(e.target.files);
     if (formData[key].length + files.length > limit) return;
@@ -166,47 +184,38 @@ export default function ValentineForm() {
     setFormData({ ...formData, [key]: updated });
   };
 
-  const addItem = (key, empty) => {
-    if (formData[key].length >= 4) return;
-    setFormData({ ...formData, [key]: [...formData[key], empty] });
+  /* AUDIO */
+  const handleAudioUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setFormData({
+      ...formData,
+      audio: file,
+      audioPreview: URL.createObjectURL(file),
+    });
   };
 
-  const removeItem = (key, index) => {
-    const updated = [...formData[key]];
-    updated.splice(index, 1);
-    setFormData({ ...formData, [key]: updated });
+  const removeAudio = () => {
+    if (formData.audioPreview) URL.revokeObjectURL(formData.audioPreview);
+    setFormData({ ...formData, audio: null, audioPreview: null });
   };
 
-  const updateItem = (key, index, field, value) => {
-    const updated = [...formData[key]];
-    updated[index][field] = value;
-    setFormData({ ...formData, [key]: updated });
-  };
-
-  /* ================= VALIDATION ================= */
-
+  /* VALIDATION */
   const isStepValid = () => {
     switch (step) {
       case 1:
-        return (
-          formData.banner1Images.length > 0 &&
-          formData.fromName.trim() &&
-          formData.toName.trim()
-        );
+        return formData.banner1Images.length && formData.fromName && formData.toName;
       case 2:
-        return formData.loveLetter.trim().length >= 10;
+        return formData.loveLetter.length >= 10;
       case 3:
-        return formData.promises.every(
-          (p) => p.title.trim() && p.description.trim()
-        );
+        return formData.promises.every(p => p.title && p.description);
       case 4:
-        return formData.journeys.every(
-          (j) => j.title.trim() && j.year.trim() && j.description.trim()
-        );
+        return formData.journeys.every(j => j.title && j.year && j.description);
       case 5:
         return formData.galleryImages.length > 0;
       case 6:
-        return formData.firstMetYear !== "";
+        return formData.firstMetYear;
       case 7:
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
       case 8:
@@ -234,7 +243,6 @@ export default function ValentineForm() {
 
       {showPaymentSummary ? (
         <PaymentSummary formData={formData} />
-        // <PaymentSuccess/>
       ) : (
         <div className="relative z-10 bg-white rounded-3xl shadow-2xl p-6 max-w-lg w-full">
 
@@ -246,17 +254,11 @@ export default function ValentineForm() {
           </p>
 
           <AnimatePresence mode="wait">
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-            >
+            <motion.div key={step} initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
+
               {step === 1 && (
                 <>
-                  <ImageUploadBox
-                    images={formData.banner1Images}
-                    limit={4}
+                  <ImageUploadBox images={formData.banner1Images} limit={4}
                     onUpload={(e) => handleImageUpload(e, "banner1Images", 4)}
                     onRemove={(i) => removeImage("banner1Images", i)}
                   />
@@ -266,86 +268,182 @@ export default function ValentineForm() {
               )}
 
               {step === 2 && (
-                <textarea name="loveLetter" rows={5} placeholder="Write your love letter 💌" value={formData.loveLetter} onChange={handleChange} className="w-full p-3 border rounded-xl" />
+                <>
+                  <textarea name="loveLetter" rows={5} placeholder="Write your love letter 💌"
+                    value={formData.loveLetter} onChange={handleChange}
+                    className="w-full p-3 border rounded-xl mb-4"
+                  />
+                  <AudioUploadBox
+                    audioPreview={formData.audioPreview}
+                    onUpload={handleAudioUpload}
+                    onRemove={removeAudio}
+                  />
+                </>
               )}
 
               {step === 3 && (
-                <>
-                  {formData.promises.map((p, i) => (
-                    <div key={i} className="border rounded-xl p-3 mb-3 relative">
-                      <input placeholder="Promise Title" value={p.title} onChange={(e) => updateItem("promises", i, "title", e.target.value)} className="w-full p-3 border rounded-xl mb-2" />
-                      <textarea placeholder="Promise Description" value={p.description} onChange={(e) => updateItem("promises", i, "description", e.target.value)} className="w-full p-3 border rounded-xl" />
-                      {i > 0 && <button onClick={() => removeItem("promises", i)} className="absolute top-2 right-2 text-red-500">✕</button>}
-                    </div>
-                  ))}
-                  {formData.promises.length < 4 && <AddButton onClick={() => addItem("promises", { title: "", description: "" })} />}
-                </>
-              )}
+  <>
+    {formData.promises.map((p, i) => (
+      <div key={i} className="border rounded-xl p-3 mb-3 relative">
+        <input
+          placeholder="Promise Title"
+          value={p.title}
+          onChange={(e) => {
+            const promises = [...formData.promises];
+            promises[i].title = e.target.value;
+            setFormData({ ...formData, promises });
+          }}
+          className="w-full p-3 border rounded-xl mb-2"
+        />
 
-              {step === 4 && (
-                <>
-                  {formData.journeys.map((j, i) => (
-                    <div key={i} className="border rounded-xl p-3 mb-3 relative">
-                      <input placeholder="Journey Title" value={j.title} onChange={(e) => updateItem("journeys", i, "title", e.target.value)} className="w-full p-3 border rounded-xl mb-2" />
-                      <input placeholder="Year" value={j.year} onChange={(e) => updateItem("journeys", i, "year", e.target.value)} className="w-full p-3 border rounded-xl mb-2" />
-                      <textarea placeholder="Journey Description" value={j.description} onChange={(e) => updateItem("journeys", i, "description", e.target.value)} className="w-full p-3 border rounded-xl" />
-                      {i > 0 && <button onClick={() => removeItem("journeys", i)} className="absolute top-2 right-2 text-red-500">✕</button>}
-                    </div>
-                  ))}
-                  {formData.journeys.length < 4 && <AddButton onClick={() => addItem("journeys", { title: "", year: "", description: "" })} />}
-                </>
-              )}
+        <textarea
+          placeholder="Promise Description"
+          value={p.description}
+          onChange={(e) => {
+            const promises = [...formData.promises];
+            promises[i].description = e.target.value;
+            setFormData({ ...formData, promises });
+          }}
+          className="w-full p-3 border rounded-xl"
+        />
+
+        {i > 0 && (
+          <button
+            onClick={() => {
+              const promises = [...formData.promises];
+              promises.splice(i, 1);
+              setFormData({ ...formData, promises });
+            }}
+            className="absolute top-2 right-2 text-red-500"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+    ))}
+
+    {formData.promises.length < 4 && (
+      <AddButton
+        onClick={() =>
+          setFormData({
+            ...formData,
+            promises: [...formData.promises, { title: "", description: "" }],
+          })
+        }
+      />
+    )}
+  </>
+)}
+
+
+           {step === 4 && (
+  <>
+    {formData.journeys.map((j, i) => (
+      <div key={i} className="border rounded-xl p-3 mb-3 relative">
+        <input
+          placeholder="Journey Title"
+          value={j.title}
+          onChange={(e) => {
+            const journeys = [...formData.journeys];
+            journeys[i].title = e.target.value;
+            setFormData({ ...formData, journeys });
+          }}
+          className="w-full p-3 border rounded-xl mb-2"
+        />
+
+        <input
+          placeholder="Year"
+          value={j.year}
+          onChange={(e) => {
+            const journeys = [...formData.journeys];
+            journeys[i].year = e.target.value;
+            setFormData({ ...formData, journeys });
+          }}
+          className="w-full p-3 border rounded-xl mb-2"
+        />
+
+        <textarea
+          placeholder="Journey Description"
+          value={j.description}
+          onChange={(e) => {
+            const journeys = [...formData.journeys];
+            journeys[i].description = e.target.value;
+            setFormData({ ...formData, journeys });
+          }}
+          className="w-full p-3 border rounded-xl"
+        />
+
+        {i > 0 && (
+          <button
+            onClick={() => {
+              const journeys = [...formData.journeys];
+              journeys.splice(i, 1);
+              setFormData({ ...formData, journeys });
+            }}
+            className="absolute top-2 right-2 text-red-500"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+    ))}
+
+    {formData.journeys.length < 4 && (
+      <AddButton
+        onClick={() =>
+          setFormData({
+            ...formData,
+            journeys: [
+              ...formData.journeys,
+              { title: "", year: "", description: "" },
+            ],
+          })
+        }
+      />
+    )}
+  </>
+)}
+
 
               {step === 5 && (
-                <ImageUploadBox
-                  images={formData.galleryImages}
-                  limit={10}
+                <ImageUploadBox images={formData.galleryImages} limit={10}
                   onUpload={(e) => handleImageUpload(e, "galleryImages", 10)}
                   onRemove={(i) => removeImage("galleryImages", i)}
                 />
               )}
 
               {step === 6 && (
-                <input type="date" name="firstMetYear" value={formData.firstMetYear} onChange={handleChange} className="w-full p-3 border rounded-xl" />
+                <input type="date" name="firstMetYear" value={formData.firstMetYear}
+                  onChange={handleChange} className="w-full p-3 border rounded-xl" />
               )}
 
               {step === 7 && (
-                <input type="email" name="email" placeholder="Enter your email 📧" value={formData.email} onChange={handleChange} className="w-full p-3 border rounded-xl" />
+                <input type="email" name="email" placeholder="Email"
+                  value={formData.email} onChange={handleChange}
+                  className="w-full p-3 border rounded-xl" />
               )}
 
               {step === 8 && (
-                <input type="tel" name="phone" placeholder="Enter phone number 📱" value={formData.phone} onChange={handleChange} maxLength={10} className="w-full p-3 border rounded-xl" />
+                <input type="tel" name="phone" placeholder="Phone"
+                  value={formData.phone} onChange={handleChange}
+                  className="w-full p-3 border rounded-xl" />
               )}
+
             </motion.div>
           </AnimatePresence>
 
           <div className="flex justify-between mt-6">
             {step > 1 && <button onClick={back} className="px-4 py-2 border rounded-xl">Back</button>}
-            {step < 8 ? (
-              <button
-                onClick={next}
-                disabled={!isStepValid()}
-                className={`ml-auto px-6 py-3 rounded-xl font-semibold ${
-                  isStepValid()
-                    ? "bg-gradient-to-r from-pink-500 to-red-500 text-white"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                }`}
-              >
-                Next
-              </button>
-            ) : (
-              <button
-                onClick={() => setShowPopup(true)}
-                disabled={!isStepValid()}
-                className={`ml-auto px-6 py-3 rounded-xl font-semibold ${
-                  isStepValid()
-                    ? "bg-gradient-to-r from-pink-500 to-red-500 text-white"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                }`}
-              >
-                Save With Love 💖
-              </button>
-            )}
+            <button onClick={step < 8 ? next : () => setShowPopup(true)}
+              disabled={!isStepValid()}
+              className={`ml-auto px-6 py-3 rounded-xl font-semibold ${
+                isStepValid()
+                  ? "bg-gradient-to-r from-pink-500 to-red-500 text-white"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+            >
+              {step < 8 ? "Next" : "Save With Love 💖"}
+            </button>
           </div>
         </div>
       )}

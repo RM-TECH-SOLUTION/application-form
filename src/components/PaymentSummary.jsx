@@ -65,55 +65,68 @@ export default function PaymentSummary({ formData }) {
     description: "Payment for Valentine Card",
     order_id: orderData.id,
 
-    handler: async function (response) {
-      try {
-        const fd = new FormData();
+ handler: async function (response) {
+  try {
+    const fd = new FormData();
 
-        fd.append("fromName", formData.fromName);
-        fd.append("toName", formData.toName);
-        fd.append("loveLetter", formData.loveLetter);
-        fd.append("firstMetYear", formData.firstMetYear);
-        fd.append("email", formData.email);
-        fd.append("paymentStatus", "paid");
-        fd.append("phone", formData.phone);
+    fd.append("fromName", formData.fromName);
+    fd.append("toName", formData.toName);
+    fd.append("loveLetter", formData.loveLetter);
+    fd.append("firstMetYear", formData.firstMetYear);
+    fd.append("email", formData.email);
+    fd.append("phone", formData.phone);
+    fd.append("paymentStatus", "paid");
 
-        fd.append("promises", JSON.stringify(formData.promises));
-        fd.append("journeys", JSON.stringify(formData.journeys));
+    fd.append("promises", JSON.stringify(formData.promises));
+    fd.append("journeys", JSON.stringify(formData.journeys));
 
-        formData.banner1Images.forEach((img) => {
-          fd.append("bannerImages[]", img.file);
-        });
+    // 💰 pricing info
+    fd.append("amount", totalAmount);
+    fd.append("discount", discount);
+    fd.append("promoCode", promoCode || "");
 
-        formData.galleryImages.forEach((img) => {
-          fd.append("galleryImages[]", img.file);
-        });
+    // 🖼 images
+    formData.banner1Images.forEach((img) => {
+      fd.append("bannerImages[]", img.file);
+    });
 
-        fd.append("razorpayPaymentId", response.razorpay_payment_id);
-        fd.append("razorpayOrderId", response.razorpay_order_id);
-        fd.append("razorpaySignature", response.razorpay_signature);
+    formData.galleryImages.forEach((img) => {
+      fd.append("galleryImages[]", img.file);
+    });
 
-        const saveRes = await fetch(
-          "https://api.rmtechsolution.com/saveStory.php",
-          {
-            method: "POST",
-            body: fd,
-          }
-        );
+    // 🎤 audio
+    if (formData.audio) {
+      fd.append("audio", formData.audio);
+    }
 
-        const saveData = await saveRes.json();
+    // 💳 razorpay refs
+    fd.append("razorpayPaymentId", response.razorpay_payment_id);
+    fd.append("razorpayOrderId", response.razorpay_order_id);
+    fd.append("razorpaySignature", response.razorpay_signature);
 
-        if (saveData.success) {
-          setGoToPaymentSuccesspage(true);
-        } else {
-          alert("Failed to save story ❌");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Server error ❌");
-      } finally {
-        setLoading(false); // ✅ success / error
+    const saveRes = await fetch(
+      "https://api.rmtechsolution.com/saveStory.php",
+      {
+        method: "POST",
+        body: fd,
       }
-    },
+    );
+
+    const saveData = await saveRes.json();
+
+    if (saveData.success) {
+      setGoToPaymentSuccesspage(true);
+    } else {
+      alert("Failed to save story ❌");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Server error ❌");
+  } finally {
+    setLoading(false);
+  }
+},
+
 
     modal: {
       ondismiss: function () {
