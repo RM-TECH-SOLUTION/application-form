@@ -231,13 +231,13 @@ export default function PaymentSummary({ formData }) {
 
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <FaTag className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <FaTag className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" style={{fontSize:13}}/>
                 <input
                   type="text"
                   placeholder="Enter code (LOVE100)"
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value)}
-                  className="w-full pl-10 p-3 border rounded-xl"
+                  className="w-full pl-7 p-3 border rounded-xl"
                   style={{fontSize:13}}
                 />
               </div>
