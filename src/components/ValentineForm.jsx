@@ -68,13 +68,13 @@ function AudioUploadBox({ audioPreview, onUpload, onRemove }) {
   return (
     <div className="mb-4">
       <label className="block text-sm font-medium text-gray-600 mb-2">
-        Voice Message 🎤 (optional)
+        Song OR Voice Message 🎤 (optional)
       </label>
 
       {!audioPreview ? (
         <label className="w-full flex items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer hover:border-pink-400 bg-white">
           <span className="text-gray-400 font-medium">
-            Click to upload music or audio (mp3 / wav / m4a)
+            Click to upload song or audio (mp3 / wav / m4a)
           </span>
           <input type="file" accept="audio/*" onChange={onUpload} className="hidden" />
         </label>
