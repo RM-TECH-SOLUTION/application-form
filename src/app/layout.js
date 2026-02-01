@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "RM Tech Solution Valentines-Love-Form",
-  description: "Create A special Valentine tory",
+  description: "Create A special Valentine story",
 };
 
 export default function RootLayout({ children }) {
